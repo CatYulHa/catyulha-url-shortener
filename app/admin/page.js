@@ -1,34 +1,45 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ArrowClockwise, LinkSimple, WarningCircle } from "@phosphor-icons/react";
+
+const dateFormat = new Intl.DateTimeFormat("ko-KR", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+const numberFormat = new Intl.NumberFormat("ko-KR");
 
 function formatDate(value) {
-  if (!value) {
-    return "-";
-  }
-
-  return new Date(value).toLocaleString("ko-KR");
+  return value ? dateFormat.format(new Date(value)) : null;
 }
 
-function StatCard({ title, value, detail }) {
+function Stat({ label, value, unit, detail }) {
   return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: 12,
-        padding: 20,
-        background: "white",
-      }}
-    >
-      <div style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>
-        {title}
+    <div className="stat">
+      <div className="stat-label">{label}</div>
+      <div className="stat-value">
+        {value}
+        {unit && <small>{unit}</small>}
       </div>
-      <div style={{ fontSize: 28, fontWeight: 700 }}>{value}</div>
-      {detail ? (
-        <div style={{ fontSize: 13, color: "#777", marginTop: 8 }}>
-          {detail}
-        </div>
-      ) : null}
+      {detail && <div className="stat-detail">{detail}</div>}
+    </div>
+  );
+}
+
+function LoadingView() {
+  return (
+    <div aria-hidden="true">
+      <div className="stat-grid">
+        {[0, 1, 2, 3].map((key) => (
+          <div className="stat" key={key}>
+            <div className="skeleton skeleton-line" style={{ width: "60%" }} />
+            <div className="skeleton skeleton-value" />
+          </div>
+        ))}
+      </div>
+      <div className="section">
+        <div className="skeleton skeleton-table" />
+      </div>
     </div>
   );
 }
@@ -47,15 +58,21 @@ export default function AdminPage() {
         cache: "no-store",
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message ?? "Failed to load stats.");
+      if (response.status === 401) {
+        throw new Error("관리자 로그인이 필요합니다. 페이지를 새로 열어 다시 로그인해 주세요.");
       }
 
-      setStats(data);
+      if (!response.ok) {
+        throw new Error("통계를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+
+      setStats(await response.json());
     } catch (err) {
-      setError(err.message ?? "Failed to load stats.");
+      setError(
+        err instanceof TypeError
+          ? "서버에 연결할 수 없습니다."
+          : err.message
+      );
     } finally {
       setLoading(false);
     }
@@ -65,136 +82,134 @@ export default function AdminPage() {
     loadStats();
   }, [loadStats]);
 
-  if (loading && !stats) {
-    return <main style={{ padding: 32 }}>통계를 불러오는 중입니다...</main>;
-  }
-
-  if (error && !stats) {
-    return (
-      <main style={{ padding: 32 }}>
-        <h1>관리자 통계</h1>
-        <p>{error}</p>
-        <button onClick={loadStats}>다시 시도</button>
-      </main>
-    );
-  }
-
-  const { summary, urls } = stats;
-  const topUrl = summary.topUrl;
+  const summary = stats?.summary;
+  const urls = stats?.urls ?? [];
+  const topUrl = summary?.topUrl;
 
   return (
-    <main
-      style={{
-        maxWidth: 1100,
-        margin: "0 auto",
-        padding: "40px 24px",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 16,
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+    <main id="main" className="content" aria-busy={loading}>
+      <div className="page-heading">
         <div>
-          <h1 style={{ margin: 0 }}>관리자 통계</h1>
-          <p style={{ color: "#666", marginBottom: 0 }}>
-            URL Shortener의 사용량을 확인합니다.
-          </p>
+          <h1>관리자 통계</h1>
+          <p>단축 URL별 클릭 수와 최근 클릭 시각</p>
         </div>
-        <button onClick={loadStats} disabled={loading}>
-          {loading ? "새로고침 중..." : "새로고침"}
-        </button>
+        <div>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={loadStats}
+            disabled={loading}
+          >
+            <ArrowClockwise size={16} aria-hidden="true" />
+            {loading && stats ? "불러오는 중…" : "새로고침"}
+          </button>
+        </div>
       </div>
 
-      {error ? (
-        <p style={{ color: "crimson" }}>새로고침 실패: {error}</p>
-      ) : null}
-
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: 16,
-          marginBottom: 32,
-        }}
-      >
-        <StatCard title="전체 단축 URL 수" value={summary.totalUrls} />
-        <StatCard title="전체 클릭 수" value={summary.totalClicks} />
-        <StatCard title="한 번 이상 클릭된 URL 수" value={summary.clickedUrls} />
-        <StatCard
-          title="가장 많이 클릭된 URL"
-          value={topUrl ? `/${topUrl.shortCode}` : "-"}
-          detail={topUrl ? `${topUrl.clickCount}회 클릭` : "아직 클릭 기록이 없습니다."}
-        />
-      </section>
-
-      <section>
-        <h2>URL별 사용량</h2>
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              background: "white",
-            }}
-          >
-            <thead>
-              <tr>
-                <th style={thStyle}>Short Code</th>
-                <th style={thStyle}>Original URL</th>
-                <th style={thStyle}>클릭 수</th>
-                <th style={thStyle}>생성 시간</th>
-                <th style={thStyle}>최근 클릭 시간</th>
-              </tr>
-            </thead>
-            <tbody>
-              {urls.length === 0 ? (
-                <tr>
-                  <td style={tdStyle} colSpan={5}>
-                    저장된 URL이 없습니다.
-                  </td>
-                </tr>
-              ) : (
-                urls.map((url) => (
-                  <tr key={url.shortCode}>
-                    <td style={tdStyle}>{url.shortCode}</td>
-                    <td style={tdStyle}>
-                      <a
-                        href={url.originalUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {url.originalUrl}
-                      </a>
-                    </td>
-                    <td style={tdStyle}>{url.clickCount}</td>
-                    <td style={tdStyle}>{formatDate(url.createdAt)}</td>
-                    <td style={tdStyle}>{formatDate(url.lastClickedAt)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {error && (
+        <div className="callout page-alert" role="alert">
+          <WarningCircle size={18} weight="bold" aria-hidden="true" />
+          <p>{error}</p>
+          <button type="button" className="btn btn-secondary" onClick={loadStats}>
+            다시 시도
+          </button>
         </div>
-      </section>
+      )}
+
+      {!stats && loading && <LoadingView />}
+
+      {summary && (
+        <>
+          <section aria-label="요약">
+            <div className="stat-grid">
+              <Stat
+                label="전체 단축 URL"
+                value={numberFormat.format(summary.totalUrls)}
+                unit="개"
+              />
+              <Stat
+                label="전체 클릭"
+                value={numberFormat.format(summary.totalClicks)}
+                unit="회"
+              />
+              <Stat
+                label="한 번 이상 클릭된 URL"
+                value={numberFormat.format(summary.clickedUrls)}
+                unit="개"
+              />
+              <Stat
+                label="가장 많이 클릭된 URL"
+                value={topUrl ? `/${topUrl.shortCode}` : "없음"}
+                detail={
+                  topUrl
+                    ? `${numberFormat.format(topUrl.clickCount)}회 클릭`
+                    : "아직 클릭 기록 없음"
+                }
+              />
+            </div>
+          </section>
+
+          <section className="section" aria-labelledby="url-table-title">
+            <div className="section-title">
+              <h2 id="url-table-title">URL별 사용량</h2>
+              {summary.totalUrls > urls.length && (
+                <p>
+                  {numberFormat.format(summary.totalUrls)}개 중 클릭 많은 순{" "}
+                  {numberFormat.format(urls.length)}개 표시
+                </p>
+              )}
+            </div>
+
+            {urls.length === 0 ? (
+              <div className="empty-state">
+                <LinkSimple size={20} aria-hidden="true" />
+                <h3>아직 줄인 URL이 없음</h3>
+                <p>URL을 줄이면 여기에 클릭 수가 쌓입니다.</p>
+                <a className="btn btn-primary" href="/">
+                  URL 줄이기
+                </a>
+              </div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col" className="col-code">Short Code</th>
+                    <th scope="col">원본 URL</th>
+                    <th scope="col" className="num">클릭 수</th>
+                    <th scope="col" className="col-date">생성</th>
+                    <th scope="col" className="col-date">최근 클릭</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {urls.map((url) => (
+                    <tr key={url.shortCode}>
+                      <td data-label="Short Code" className="col-code">
+                        <span className="mono">{url.shortCode}</span>
+                      </td>
+                      <td data-label="원본 URL" className="url-cell">
+                        <a href={url.originalUrl} target="_blank" rel="noreferrer">
+                          {url.originalUrl}
+                        </a>
+                      </td>
+                      <td data-label="클릭 수" className="num">
+                        {numberFormat.format(url.clickCount)}
+                      </td>
+                      <td data-label="생성" className="col-date tabular">
+                        {formatDate(url.createdAt) ?? <span className="is-empty">없음</span>}
+                      </td>
+                      <td data-label="최근 클릭" className="col-date tabular">
+                        {formatDate(url.lastClickedAt) ?? (
+                          <span className="is-empty">클릭 없음</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
+        </>
+      )}
     </main>
   );
 }
-
-const thStyle = {
-  textAlign: "left",
-  padding: "12px 10px",
-  borderBottom: "2px solid #ddd",
-  whiteSpace: "nowrap",
-};
-
-const tdStyle = {
-  padding: "12px 10px",
-  borderBottom: "1px solid #eee",
-  verticalAlign: "top",
-};

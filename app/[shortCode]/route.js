@@ -1,5 +1,6 @@
 import { findUrlByShortCode } from "../../lib/db";
 import { recordClick } from "../../lib/stats";
+import { notFoundPage } from "../../lib/not-found-page";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +19,10 @@ export async function GET(request, { params }) {
   if (!originalUrl) {
     console.warn("Short URL not found", { shortCode });
 
-    return new Response("Not Found", {
+    return new Response(notFoundPage(), {
       status: 404,
       headers: {
+        "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store",
       },
     });
