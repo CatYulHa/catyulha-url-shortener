@@ -186,33 +186,6 @@ li {
   white-space: nowrap;
 }
 
-.top-nav {
-  display: flex;
-  gap: 4px;
-}
-
-.top-nav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: var(--radius-control);
-  color: var(--ink-2);
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.top-nav a:hover {
-  background: var(--surface-sunken);
-  color: var(--ink);
-}
-
-.top-nav a[aria-current="page"] {
-  background: var(--accent-wash);
-  color: var(--ink);
-}
-
 /* ---------- 본문, 화면 제목, 구역 제목 ---------- */
 .content {
   max-width: 1120px;
@@ -220,6 +193,7 @@ li {
   padding: 40px 32px 64px;
 }
 
+.top-bar-inner.is-narrow,
 .content-narrow {
   max-width: 784px;
 }
@@ -327,8 +301,7 @@ li {
 }
 
 @media (pointer: coarse) {
-  .btn,
-  .top-nav a {
+  .btn {
     min-height: 40px;
   }
 }
@@ -496,45 +469,36 @@ li {
   word-break: break-all;
 }
 
-/* ---------- 메인 화면 2열 ---------- */
-.home-grid {
+/* ---------- 안내: 카드 아래 같은 폭 두 칸 ---------- */
+.rule-grid {
   display: grid;
-  gap: 32px;
-  align-items: start;
-}
-
-@media (min-width: 1024px) {
-  .home-grid {
-    grid-template-columns: minmax(0, 1fr) 340px;
-  }
-}
-
-/* ---------- 안내 목록 ---------- */
-.rule-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 0;
   list-style: none;
-}
-
-.rule-list li {
-  display: flex;
-  gap: 12px;
-  padding: 14px 20px;
   color: var(--ink-2);
+  font-size: 14px;
 }
 
-.rule-list li + li {
-  border-top: 1px solid var(--line);
+.rule-grid li {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
 }
 
-.rule-list svg {
+.rule-grid li + li {
+  border-left: 1px solid var(--line);
+}
+
+.rule-grid svg {
   flex-shrink: 0;
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--ink-3);
 }
 
-.rule-list strong {
+.rule-grid strong {
   display: block;
   color: var(--ink);
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -827,6 +791,15 @@ li {
 
   .input-row {
     flex-direction: column;
+  }
+
+  .rule-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rule-grid li + li {
+    border-top: 1px solid var(--line);
+    border-left: 0;
   }
 
   .input-row .btn {

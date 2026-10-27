@@ -147,7 +147,7 @@ export default function Home() {
   }
 
   return (
-    <main id="main" className="content">
+    <main id="main" className="content content-narrow">
       <div className="page-heading">
         <div>
           <h1>URL 줄이기</h1>
@@ -165,129 +165,122 @@ export default function Home() {
             : ""}
       </p>
 
-      <div className="home-grid">
-        <section className="panel" aria-label="URL 입력">
-          <form
-            className="panel-body"
-            onSubmit={handleSubmit}
-            noValidate
-            aria-busy={isLoading}
-          >
-            <label className="field-label" htmlFor="original-url">
-              원본 URL
-            </label>
-            <div className="input-row">
-              <input
-                ref={inputRef}
-                id="original-url"
-                className="form-input"
-                name="originalUrl"
-                type="text"
-                inputMode="url"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="https://example.com/…"
-                value={originalUrl}
-                onChange={handleChange}
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? "url-error" : "url-hint"}
-                disabled={isLoading}
-              />
+      <section className="panel" aria-label="URL 입력">
+        <form
+          className="panel-body"
+          onSubmit={handleSubmit}
+          noValidate
+          aria-busy={isLoading}
+        >
+          <label className="field-label" htmlFor="original-url">
+            원본 URL
+          </label>
+          <div className="input-row">
+            <input
+              ref={inputRef}
+              id="original-url"
+              className="form-input"
+              name="originalUrl"
+              type="text"
+              inputMode="url"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="https://example.com/…"
+              value={originalUrl}
+              onChange={handleChange}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "url-error" : "url-hint"}
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? "줄이는 중…" : "줄이기"}
+            </button>
+          </div>
+
+          <div aria-live="polite">
+            {error ? (
+              <p id="url-error" className="field-error">
+                <WarningCircle size={16} weight="bold" aria-hidden="true" />
+                {error}
+              </p>
+            ) : (
+              <p id="url-hint" className="field-hint">
+                http:// 또는 https://로 시작하는 주소
+              </p>
+            )}
+          </div>
+        </form>
+
+        {result && (
+          <div className="panel-body result fade-in">
+            <div className="result-head">
+              {result.isExisting ? (
+                <span className="status-chip is-existing">
+                  <Info size={14} weight="bold" aria-hidden="true" />
+                  이미 만든 주소
+                </span>
+              ) : (
+                <span className="status-chip is-new">
+                  <CheckCircle size={14} weight="fill" aria-hidden="true" />
+                  새로 만듦
+                </span>
+              )}
+
               <button
-                type="submit"
-                className="btn btn-primary btn-lg"
-                disabled={isLoading}
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleCopy}
               >
-                {isLoading ? "줄이는 중…" : "줄이기"}
+                {copyState === "copied" ? (
+                  <Check size={16} weight="bold" aria-hidden="true" />
+                ) : (
+                  <Copy size={16} aria-hidden="true" />
+                )}
+                {copyState === "copied"
+                  ? "복사함"
+                  : copyState === "failed"
+                    ? "복사 실패"
+                    : "복사"}
               </button>
             </div>
 
-            <div aria-live="polite">
-              {error ? (
-                <p id="url-error" className="field-error">
-                  <WarningCircle size={16} weight="bold" aria-hidden="true" />
-                  {error}
-                </p>
-              ) : (
-                <p id="url-hint" className="field-hint">
-                  http:// 또는 https://로 시작하는 주소
-                </p>
-              )}
-            </div>
-          </form>
+            <a
+              className="short-url"
+              href={result.shortUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {result.shortUrl}
+            </a>
 
-          {result && (
-            <div className="panel-body result fade-in">
-              <div className="result-head">
-                {result.isExisting ? (
-                  <span className="status-chip is-existing">
-                    <Info size={14} weight="bold" aria-hidden="true" />
-                    이미 만든 주소
-                  </span>
-                ) : (
-                  <span className="status-chip is-new">
-                    <CheckCircle size={14} weight="fill" aria-hidden="true" />
-                    새로 만듦
-                  </span>
-                )}
-
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleCopy}
-                >
-                  {copyState === "copied" ? (
-                    <Check size={16} weight="bold" aria-hidden="true" />
-                  ) : (
-                    <Copy size={16} aria-hidden="true" />
-                  )}
-                  {copyState === "copied"
-                    ? "복사함"
-                    : copyState === "failed"
-                      ? "복사 실패"
-                      : "복사"}
-                </button>
-              </div>
-
-              <a
-                className="short-url"
-                href={result.shortUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {result.shortUrl}
-              </a>
-
-              <dl className="result-meta">
-                <dt>원본</dt>
-                <dd>{result.originalUrl}</dd>
-              </dl>
-            </div>
-          )}
-        </section>
-
-        <section aria-labelledby="rules-title">
-          <div className="section-title">
-            <h2 id="rules-title">이용 안내</h2>
+            <dl className="result-meta">
+              <dt>원본</dt>
+              <dd>{result.originalUrl}</dd>
+            </dl>
           </div>
-          <ul className="panel rule-list">
-            <li>
-              <ArrowsCounterClockwise size={18} aria-hidden="true" />
-              <div>
-                <strong>같은 URL은 한 번만 저장</strong>
-                다시 줄이면 처음 만든 짧은 주소를 그대로 보여 줌
-              </div>
-            </li>
-            <li>
-              <Prohibit size={18} aria-hidden="true" />
-              <div>
-                <strong>이 서비스 주소는 줄일 수 없음</strong>
-                짧은 주소가 자기 자신을 가리키지 않도록 막음
-              </div>
-            </li>
-          </ul>
-        </section>
-      </div>
+        )}
+
+        <ul className="panel-body rule-grid" aria-label="이용 안내">
+          <li>
+            <ArrowsCounterClockwise size={18} aria-hidden="true" />
+            <div>
+              <strong>같은 URL은 한 번만 저장</strong>
+              다시 줄이면 처음 만든 주소를 그대로 보여 줌
+            </div>
+          </li>
+          <li>
+            <Prohibit size={18} aria-hidden="true" />
+            <div>
+              <strong>이 서비스 주소는 줄일 수 없음</strong>
+              짧은 주소가 자기 자신을 가리키지 않게 막음
+            </div>
+          </li>
+        </ul>
+      </section>
     </main>
   );
 }

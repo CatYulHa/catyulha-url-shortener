@@ -3,42 +3,24 @@
 import { usePathname } from "next/navigation";
 import { CaretRight } from "@phosphor-icons/react";
 
-const PAGES = [
-  { href: "/", label: "URL 줄이기" },
-  { href: "/admin", label: "관리자 통계" },
-];
-
-// /admin 은 Basic 인증 창이 떠야 해서 미리 불러오는 Link 대신 일반 링크로 이동한다
+// 관리자 통계는 공개 메뉴에 두지 않고 /admin 주소로만 들어간다
 export default function TopBar() {
-  const pathname = usePathname();
-  const current = PAGES.find((page) => page.href === pathname);
+  const isAdmin = usePathname() === "/admin";
 
   return (
     <header className="top-bar">
-      <div className="top-bar-inner">
+      <div className={isAdmin ? "top-bar-inner" : "top-bar-inner is-narrow"}>
         <div className="crumbs">
           <a href="/" className="crumbs-app">
             URL Shortener
           </a>
-          {current && (
+          {isAdmin && (
             <>
               <CaretRight size={12} weight="bold" aria-hidden="true" />
-              <span className="crumbs-current">{current.label}</span>
+              <span className="crumbs-current">관리자 통계</span>
             </>
           )}
         </div>
-
-        <nav className="top-nav" aria-label="화면 이동">
-          {PAGES.map((page) => (
-            <a
-              key={page.href}
-              href={page.href}
-              aria-current={page.href === pathname ? "page" : undefined}
-            >
-              {page.label}
-            </a>
-          ))}
-        </nav>
       </div>
     </header>
   );
